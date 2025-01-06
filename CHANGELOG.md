@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file.
 - Support for logging completed requests with HTTP method, URL, status code, and duration.
 - Customizable messages for logging using `HttpLoggerOptions`.
 - Optional configuration for error logging for requests with status codes >= 300.
+- Add Mit Licence on project 
 
 ### Changed
 - N/A
