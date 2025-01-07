@@ -1,6 +1,6 @@
 {
   "name": "@samofprog/nestjs-http-logger",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
@@ -13,6 +13,7 @@
     "clean": "rimraf dist",
     "build": "yarn clean && tsc",
     "local:build": "yarn build && yalc publish",
+    "publish": "yarn build && npm publish --access public",
     "test": "jest",
     "start": "ts-node src/index.ts",
     "lint": "eslint 'src/**/*.{js,ts}' --fix",
@@ -36,6 +37,24 @@
     "typescript": "^5.7.2",
     "typescript-eslint": "^8.19.0"
   },
+  "keywords": [
+    "nestjs",
+    "fastify",
+    "middleware",
+    "http",
+    "logger",
+    "logging",
+    "http-logging",
+    "request-logging",
+    "response-logging",
+    "error-logging",
+    "nodejs",
+    "typescript",
+    "api",
+    "monitoring",
+    "debugging",
+    "performance"
+  ],
   "dependencies": {
     "@nestjs/common": "^10.4.15",
     "@types/express": "^5.0.0",
