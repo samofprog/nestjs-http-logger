@@ -25,40 +25,8 @@ yarn add @samofprog/nestjs-http-logger
 
 ## Usage
 
-### Importing the Middleware
 
-To use the `HttpLoggerMiddleware`, import it in your module and configure it in the middleware consumer.
-
-```typescript
-import {Module, MiddlewareConsumer, RequestMethod} from '@nestjs/common';
-import {HttpLoggerMiddleware} from 'your-package-name';
-
-@Module({
-    imports: [],
-    controllers: [],
-    providers: [],
-})
-export class AppModule {
-    configure(consumer: MiddlewareConsumer) {
-        consumer
-            .apply(HttpLoggerMiddleware({
-                incomingRequestMessage: (method, url) => `Received: ${method} ${url}`,
-                completedRequestMessage: (method, url, statusCode, durationMs) =>
-                    `Handled: ${method} ${url} - ${statusCode} (${durationMs} ms)`
-            }))
-            .forRoutes({path: '*', method: RequestMethod.ALL});
-        
-        //or 
-        
-        consumer
-            .apply(HttpLoggerMiddleware())
-    }
-}
-```
-
-### Using with `app.use`
-
-The `HttpLoggerMiddleware` can also be used directly with the `app.use` method in a NestJS application:
+The `HttpLoggerMiddleware` can be used directly with the `app.use` method in a NestJS application:
 
 ```typescript
 import {HttpLoggerMiddleware} from 'your-package-name';
@@ -111,9 +79,7 @@ export interface HttpLoggerOptions {
 #### Default Usage
 
 ```typescript
-consumer
-  .apply(HttpLoggerMiddleware())
-  .forRoutes({ path: '*', method: RequestMethod.ALL });
+app.use(HttpLoggerMiddleware());
 ```
 
 This will log messages with the following formats:
@@ -124,13 +90,11 @@ This will log messages with the following formats:
 #### Custom Messages
 
 ```typescript
-consumer
-  .apply(HttpLoggerMiddleware({
-    incomingRequestMessage: (method, url) => `>>> ${method} ${url} >>>`,
+app.use(HttpLoggerMiddleware({
+    incomingRequestMessage: (method, url) => `Received: ${method} ${url}`,
     completedRequestMessage: (method, url, statusCode, durationMs) =>
-      `<<< ${method} ${url} <<< Status: ${statusCode}, Time: ${durationMs}ms`,
-  }))
-  .forRoutes({ path: '*', method: RequestMethod.ALL });
+        `Handled: ${method} ${url} - ${statusCode} (${durationMs} ms)`
+}));
 ```
 
 This will log messages with custom formats, e.g.,
