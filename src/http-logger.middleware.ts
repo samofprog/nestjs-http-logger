@@ -1,7 +1,6 @@
 import { Logger } from '@nestjs/common';
 import { NextFunction } from 'express';
-import { HttpLoggerOptions } from './http-logger-options.interface';
-import { IncomingMessage, ServerResponse } from 'http';
+import { HttpLoggerOptions, Req, Res } from './interfaces';
 // Configurable logger middleware
 export function HttpLoggerMiddleware(options?: HttpLoggerOptions) {
     const logger = new Logger(HttpLoggerMiddleware.name);
@@ -16,11 +15,11 @@ export function HttpLoggerMiddleware(options?: HttpLoggerOptions) {
     // Use provided options or default options
     const configOptions = options ?? defaultOptions;
 
-    return (req: IncomingMessage, res: ServerResponse, next: NextFunction) => {
+    return (req: Req, res: Res, next: NextFunction) => {
         const startTime = process.hrtime();
 
         const method = req.method;
-        const url = req.url;
+        const url = req.originalUrl;
 
         // Log request details
         const incomingRequestMessage =
@@ -51,6 +50,7 @@ export function HttpLoggerMiddleware(options?: HttpLoggerOptions) {
             }
         };
         res.once('finish', onResponseFinish);
+
         // Call next middleware
         next();
     };
