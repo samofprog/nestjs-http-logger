@@ -1,3 +1,5 @@
+import { LoggerService } from '@nestjs/common';
+
 export interface Req {
     method: string;
     originalUrl: string;
@@ -8,6 +10,7 @@ export interface Res {
     once: OnceFunction;
 }
 export interface HttpLoggerOptions {
+    logger?: LoggerService;
     incomingRequestMessage?: (method: string, url: string) => string;
     completedRequestMessage?: (
         method: string,
