@@ -4,10 +4,14 @@ HttpLoggerMiddleware is a configurable middleware for logging HTTP requests and 
 
 ## Features
 
-- Logs incoming HTTP request details.
-- Logs response details, including the status code and duration.
-- Configurable log messages for both incoming and completed requests.
-- Differentiates between successful and error responses for better debugging.
+- Logs detailed information about incoming HTTP requests (method, URL).
+- Logs detailed information about completed responses, including:
+    - HTTP status code.
+    - Processing duration in milliseconds.
+- Supports custom log messages for incoming and completed requests.
+- Allows the use of a custom logger (`LoggerService`) or defaults to NestJS's global logger.
+- Differentiates between successful responses (logged as `log`) and error responses (logged as `error`) for better debugging.
+- Easy integration with both default and custom configurations.
 
 ## Installation
 
@@ -61,6 +65,7 @@ The middleware accepts an optional `HttpLoggerOptions` object to customize the l
 
 ```typescript
 export interface HttpLoggerOptions {
+  logger?: LoggerService; // NestJS LoggerService
   incomingRequestMessage?: (method: string, url: string) => string;
   completedRequestMessage?: (
     method: string,
@@ -73,13 +78,15 @@ export interface HttpLoggerOptions {
 
 - `incomingRequestMessage`: A function that generates the log message for incoming requests. Receives `method` and `url` as parameters.
 - `completedRequestMessage`: A function that generates the log message for completed requests. Receives `method`, `url`, `statusCode`, and `durationMs` as parameters.
+- `logger`: An optional custom logger implementing the `LoggerService` interface from NestJS. If not provided, a default `Logger` will be used.
+
 
 ### Example
 
 #### Default Usage
 
 ```typescript
-app.use(HttpLoggerMiddleware());
+app.use(HttpLoggerMiddleware.create());
 ```
 
 This will log messages with the following formats:
@@ -101,6 +108,19 @@ This will log messages with custom formats, e.g.,
 
 - Incoming request: `>>> GET /example >>>`
 - Completed request: `<<< GET /example <<< Status: 200, Time: 123.45ms`
+
+#### Custom Logger
+
+If you want to use your own logger instead of the default NestJS logger, you can pass it via the `logger` option:
+
+```typescript
+import { Logger } from '@nestjs/common';
+
+const customLogger = new Logger('CustomLogger');
+
+app.use(HttpLoggerMiddleware.create({ logger: customLogger }));
+```
+
 
 ## License
 
