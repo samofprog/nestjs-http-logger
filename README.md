@@ -40,7 +40,7 @@ import {AppModule} from './app.module';
 async function bootstrap() {
     const app = await NestFactory.create(AppModule);
 
-    app.use(HttpLoggerMiddleware({
+    app.use(HttpLoggerMiddleware.create({
         incomingRequestMessage: (method, url) => `Received: ${method} ${url}`,
         completedRequestMessage: (method, url, statusCode, durationMs) =>
             `Handled: ${method} ${url} - ${statusCode} (${durationMs} ms)`
@@ -48,7 +48,7 @@ async function bootstrap() {
 
     // or
 
-    app.use(HttpLoggerMiddleware());
+    app.use(HttpLoggerMiddleware.create());
 
 
     await app.listen(3000);
@@ -97,7 +97,7 @@ This will log messages with the following formats:
 #### Custom Messages
 
 ```typescript
-app.use(HttpLoggerMiddleware({
+app.use(HttpLoggerMiddleware.create({
     incomingRequestMessage: (method, url) => `Received: ${method} ${url}`,
     completedRequestMessage: (method, url, statusCode, durationMs) =>
         `Handled: ${method} ${url} - ${statusCode} (${durationMs} ms)`
@@ -124,5 +124,5 @@ app.use(HttpLoggerMiddleware.create({ logger: customLogger }));
 
 ## License
 
-This package is open-source and available under the [MIT License](LICENSE).
+This package is open-source and available under the [MIT License](https://mit-license.org/).
 
