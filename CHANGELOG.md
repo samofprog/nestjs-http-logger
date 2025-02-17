@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.4] - 2025-02-17
+
+### Added
+- Added support for ignored paths in logging middleware to prevent logging of specific routes like Swagger assets, CSS, JS, and favicon requests.
+
 ## [1.0.2] - 2025-01-13
 
 ### Added

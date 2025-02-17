@@ -1,6 +1,6 @@
 {
   "name": "@samofprog/nestjs-http-logger",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
@@ -12,7 +12,7 @@
   "scripts": {
     "clean": "rimraf dist",
     "build": "yarn clean && tsc",
-    "local:build": "yarn build && yalc publish",
+    "publish:local": "yarn build && yalc publish",
     "publish:online": "yarn build && npm publish --access public",
     "test": "jest",
     "start": "ts-node src/index.ts",
