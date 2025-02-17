@@ -10,6 +10,7 @@ export class HttpLoggerMiddleware {
             options?.logger ?? new Logger('HttpLoggerMiddleware');
 
         const defaultOptions: HttpLoggerOptions = {
+            ignorePaths: [],
             logger,
             incomingRequestMessage: (method, url) =>
                 `Incoming Request: ${method} ${url}`,
@@ -26,38 +27,44 @@ export class HttpLoggerMiddleware {
             const method = req.method;
             const url = req.originalUrl;
 
-            // Log request details
-            const incomingRequestMessage =
-                configOptions.incomingRequestMessage?.(
-                    method ?? 'UNKNOWN',
-                    url ?? 'UNKNOWN'
-                ) ?? `Incoming Request: ${method} ${url}`;
-            logger.log(incomingRequestMessage);
-
-            const onResponseFinish = () => {
-                const [seconds, nanoseconds] = process.hrtime(startTime);
-                const durationMs = (seconds * 1e3 + nanoseconds / 1e6).toFixed(
-                    2
-                );
-                const statusCode = res.statusCode;
-
-                const completedRequestMessage =
-                    configOptions.completedRequestMessage?.(
+            const haveIgnoredPath = configOptions.ignorePaths?.some((path) =>
+                url.includes(path)
+            );
+            if (!haveIgnoredPath) {
+                // Log request details
+                const incomingRequestMessage =
+                    configOptions.incomingRequestMessage?.(
                         method ?? 'UNKNOWN',
-                        url ?? 'UNKNOWN',
-                        statusCode,
-                        durationMs
-                    ) ??
-                    `Completed Request: ${method} ${url} - ${statusCode} (${durationMs} ms)`;
+                        url ?? 'UNKNOWN'
+                    ) ?? `Incoming Request: ${method} ${url}`;
+                logger.log(incomingRequestMessage);
 
-                if (statusCode >= 300) {
-                    logger.error(completedRequestMessage);
-                } else {
-                    logger.log(completedRequestMessage);
-                }
-            };
+                const onResponseFinish = () => {
+                    const [seconds, nanoseconds] = process.hrtime(startTime);
+                    const durationMs = (
+                        seconds * 1e3 +
+                        nanoseconds / 1e6
+                    ).toFixed(2);
+                    const statusCode = res.statusCode;
 
-            res.once('finish', onResponseFinish);
+                    const completedRequestMessage =
+                        configOptions.completedRequestMessage?.(
+                            method ?? 'UNKNOWN',
+                            url ?? 'UNKNOWN',
+                            statusCode,
+                            durationMs
+                        ) ??
+                        `Completed Request: ${method} ${url} - ${statusCode} (${durationMs} ms)`;
+
+                    if (statusCode >= 300) {
+                        logger.error(completedRequestMessage);
+                    } else {
+                        logger.log(completedRequestMessage);
+                    }
+                };
+
+                res.once('finish', onResponseFinish);
+            }
 
             // Proceed to next middleware
             next();

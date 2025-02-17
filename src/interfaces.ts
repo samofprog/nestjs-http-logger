@@ -11,6 +11,7 @@ export interface Res {
 }
 export interface HttpLoggerOptions {
     logger?: LoggerService;
+    ignorePaths?: string[];
     incomingRequestMessage?: (method: string, url: string) => string;
     completedRequestMessage?: (
         method: string,
