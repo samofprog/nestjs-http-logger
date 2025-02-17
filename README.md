@@ -1,16 +1,18 @@
+
 # HttpLoggerMiddleware
 
-HttpLoggerMiddleware is a configurable middleware for logging HTTP requests and responses in a NestJS application. It provides detailed information about incoming requests and completed responses, including the method, URL, status code, and processing duration.
+HttpLoggerMiddleware is a configurable middleware for logging HTTP requests and responses in a NestJS application. It provides detailed information about incoming requests and completed responses, including the method, URL, status code, and processing duration. You can now also ignore specific paths from being logged.
 
 ## Features
 
 - Logs detailed information about incoming HTTP requests (method, URL).
 - Logs detailed information about completed responses, including:
-    - HTTP status code.
-    - Processing duration in milliseconds.
+  - HTTP status code.
+  - Processing duration in milliseconds.
 - Supports custom log messages for incoming and completed requests.
 - Allows the use of a custom logger (`LoggerService`) or defaults to NestJS's global logger.
 - Differentiates between successful responses (logged as `log`) and error responses (logged as `error`) for better debugging.
+- Allows ignoring specific paths using `ignorePaths`.
 - Easy integration with both default and custom configurations.
 
 ## Installation
@@ -18,22 +20,17 @@ HttpLoggerMiddleware is a configurable middleware for logging HTTP requests and 
 Install the package using npm or yarn:
 
 ```bash
-npm install @samofprog/nestjs-http-logger
-```
-
-or
-
-```bash
+npm install @samofprog/nestjs-http-logger 
+# or  
 yarn add @samofprog/nestjs-http-logger
 ```
 
 ## Usage
 
-
 The `HttpLoggerMiddleware` can be used directly with the `app.use` method in a NestJS application:
 
 ```typescript
-import {HttpLoggerMiddleware} from 'your-package-name';
+import {HttpLoggerMiddleware} from '@samofprog/nestjs-http-logger';
 import {NestFactory} from '@nestjs/core';
 import {AppModule} from './app.module';
 
@@ -43,13 +40,13 @@ async function bootstrap() {
     app.use(HttpLoggerMiddleware.create({
         incomingRequestMessage: (method, url) => `Received: ${method} ${url}`,
         completedRequestMessage: (method, url, statusCode, durationMs) =>
-            `Handled: ${method} ${url} - ${statusCode} (${durationMs} ms)`
+            `Handled: ${method} ${url} - ${statusCode} (${durationMs} ms)`,
+        ignorePaths: ['/health', '/metrics']  // Paths to ignore in logs
     }));
 
     // or
 
     app.use(HttpLoggerMiddleware.create());
-
 
     await app.listen(3000);
 }
@@ -125,4 +122,3 @@ app.use(HttpLoggerMiddleware.create({ logger: customLogger }));
 ## License
 
 This package is open-source and available under the [MIT License](https://mit-license.org/).
-
