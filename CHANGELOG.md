@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.0.0] - 2025-05-06
+
+### Added
+- Enhanced compatibility with both Express and Fastify frameworks
+- Improved request and response message format with additional details
+- Added support for logging headers in incoming requests 
+- Enhanced high-precision response time calculation using process.hrtime
+- Better error detection with differential logging for responses with status codes >= 300
+
+### Changed
+- Completely redesigned message format customization through new parameter structure
+- Updated signature for incomingRequestMessage and completedRequestMessage callback functions
+- Improved framework detection and adaptation for request/response handling
+
+### Fixed
+- Fixed event handling for both Express and Fastify response objects
+- Ensured compatibility with both frameworks when accessing URL and status information
+
 ## [1.0.4] - 2025-02-17
 
 ### Added

@@ -5,15 +5,16 @@ HttpLoggerMiddleware is a configurable middleware for logging HTTP requests and 
 
 ## Features
 
-- Logs detailed information about incoming HTTP requests (method, URL).
+- Logs detailed information about incoming HTTP requests (method, URL, headers).
 - Logs detailed information about completed responses, including:
   - HTTP status code.
-  - Processing duration in milliseconds.
+  - Precise processing duration in milliseconds.
 - Supports custom log messages for incoming and completed requests.
 - Allows the use of a custom logger (`LoggerService`) or defaults to NestJS's global logger.
 - Differentiates between successful responses (logged as `log`) and error responses (logged as `error`) for better debugging.
 - Allows ignoring specific paths using `ignorePaths`.
 - Easy integration with both default and custom configurations.
+- **Framework Compatibility**: Seamless integration with both Express and Fastify frameworks.
 
 ## Installation
 
@@ -38,9 +39,10 @@ async function bootstrap() {
     const app = await NestFactory.create(AppModule);
 
     app.use(HttpLoggerMiddleware.create({
-        incomingRequestMessage: (method, url) => `Received: ${method} ${url}`,
-        completedRequestMessage: (method, url, statusCode, durationMs) =>
-            `Handled: ${method} ${url} - ${statusCode} (${durationMs} ms)`,
+        incomingRequestMessage: (details) => 
+            `Received: ${details.method} ${details.url}`,
+        completedRequestMessage: (details) =>
+            `Handled: ${details.method} ${details.url} - ${details.statusCode} (${details.durationMs} ms)`,
         ignorePaths: ['/health', '/metrics']  // Paths to ignore in logs
     }));
 
@@ -63,13 +65,18 @@ The middleware accepts an optional `HttpLoggerOptions` object to customize the l
 ```typescript
 export interface HttpLoggerOptions {
   logger?: LoggerService; // NestJS LoggerService
-  incomingRequestMessage?: (method: string, url: string) => string;
-  completedRequestMessage?: (
-    method: string,
-    url: string,
-    statusCode: number,
-    durationMs: string
-  ) => string;
+  ignorePaths?: string[]; // List of paths to ignore for logging
+  incomingRequestMessage?: (details: {
+    method: string;
+    url: string;
+    headers: Record<string, string | string[] | undefined>;
+  }) => string;
+  completedRequestMessage?: (details: {
+    method: string;
+    url: string;
+    statusCode: number;
+    durationMs: string;
+  }) => string;
 }
 ```
 
@@ -88,16 +95,17 @@ app.use(HttpLoggerMiddleware.create());
 
 This will log messages with the following formats:
 
-- Incoming request: `Incoming Request: GET /example`
-- Completed request: `Completed Request: GET /example - 200 (123.45 ms)`
+- Incoming request: `Incoming Request: GET /example - Headers: {"user-agent":"Mozilla/5.0","accept":"*/*"}`
+- Completed request: `Completed Request: GET /example - Status: 200 - Duration: 123.45 ms`
 
 #### Custom Messages
 
 ```typescript
 app.use(HttpLoggerMiddleware.create({
-    incomingRequestMessage: (method, url) => `Received: ${method} ${url}`,
-    completedRequestMessage: (method, url, statusCode, durationMs) =>
-        `Handled: ${method} ${url} - ${statusCode} (${durationMs} ms)`
+    incomingRequestMessage: (details) => 
+        `Received: ${details.method} ${details.url}`,
+    completedRequestMessage: (details) =>
+        `Handled: ${details.method} ${details.url} - ${details.statusCode} (${details.durationMs} ms)`
 }));
 ```
 
