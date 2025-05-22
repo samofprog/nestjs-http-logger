@@ -2,74 +2,119 @@ import { Logger, LoggerService } from '@nestjs/common';
 import { HttpLoggerOptions, Req } from './interfaces';
 import { FastifyRequest } from 'fastify';
 
-// Configurable logger middleware
+type Headers = Record<string, unknown>;
+
+const createHeaderSanitizer =
+    (sensitiveKeys: readonly string[]) =>
+    (headers: Headers): Headers => {
+        return Object.entries(headers).reduce((acc, [key, value]) => {
+            acc[key] = sensitiveKeys.includes(key.toLowerCase())
+                ? '*****'
+                : value;
+            return acc;
+        }, {} as Headers);
+    };
+
 export class HttpLoggerMiddleware {
     static create(options?: Partial<HttpLoggerOptions>) {
         const logger: LoggerService =
             options?.logger ?? new Logger(HttpLoggerMiddleware.name);
+        const sensitiveHeaders = options?.sensitiveHeaders ?? [
+            'authorization',
+            'cookie',
+            'set-cookie',
+            'x-api-key',
+        ];
 
-        const defaultOptions: HttpLoggerOptions = {
-            ignorePaths: [],
+        const sanitizeHeaders =
+            options?.sanitizeHeaders ?? createHeaderSanitizer(sensitiveHeaders);
+
+        const defaultIncomingMsg = ({
+            method,
+            url,
+            headers,
+        }: {
+            method: string;
+            url: string;
+            headers: Headers;
+        }) =>
+            `Incoming request → ${method.toLowerCase()} ${url} with headers ${JSON.stringify(headers)}`;
+
+        const defaultCompletedMsg = ({
+            method,
+            url,
+            statusCode,
+            durationMs,
+        }: {
+            method: string;
+            url: string;
+            statusCode: number;
+            durationMs: string;
+        }) =>
+            `Completed request ← ${method.toLowerCase()} ${url}  with status ${statusCode} in ${durationMs} ms`;
+
+        const config = {
+            ignorePaths: [] as string[],
             logger,
-            incomingRequestMessage: (details) =>
-                `Incoming Request: ${details.method} ${details.url} - Headers: ${JSON.stringify(details.headers)}`,
-            completedRequestMessage: (details) =>
-                `Completed Request: ${details.method} ${details.url} - Status: ${details.statusCode} - Duration: ${details.durationMs} ms`,
+            sensitiveHeaders,
+            sanitizeHeaders,
+            incomingRequestMessage: defaultIncomingMsg,
+            completedRequestMessage: defaultCompletedMsg,
+            ...options,
         };
 
-        const configOptions = { ...defaultOptions, ...options };
-
-        return (req: Req, res: any, next: () => void) => {
+        return (req: Req, res: any, next: () => void): void => {
             const startTime = process.hrtime();
-
             const method = req.method;
-            const url = req.url ?? (req as FastifyRequest).raw.url; // Ensure compatibility for both Express and Fastify
+            const url = req.url ?? (req as FastifyRequest).raw.url;
 
-            const haveIgnoredPath = configOptions.ignorePaths?.some((path) =>
+            const isIgnored = config.ignorePaths.some((path) =>
                 url.includes(path)
             );
-            if (!haveIgnoredPath) {
-                const incomingRequestMessage =
-                    configOptions.incomingRequestMessage?.({
-                        method,
-                        url,
-                        headers: req.headers ?? {},
-                    }) ?? `Incoming Request: ${method} ${url}`;
-                logger.log(incomingRequestMessage);
+            if (isIgnored) {
+                next();
+                return;
+            }
 
-                const onResponseFinish = () => {
-                    const [seconds, nanoseconds] = process.hrtime(startTime);
-                    const durationMs = (
-                        seconds * 1e3 +
-                        nanoseconds / 1e6
-                    ).toFixed(2);
-                    const statusCode = res.statusCode;
+            const sanitizedHeaders = config.sanitizeHeaders(req.headers ?? {});
 
-                    const completedRequestMessage =
-                        configOptions.completedRequestMessage?.({
-                            method,
-                            url,
-                            statusCode,
-                            durationMs,
-                        }) ??
-                        `Completed Request: ${method} ${url} - ${statusCode} (${durationMs} ms)`;
+            config.logger.log(
+                config.incomingRequestMessage({
+                    method,
+                    url,
+                    headers: sanitizedHeaders,
+                })
+            );
 
-                    if (statusCode >= 300) {
-                        logger.error(completedRequestMessage);
-                    } else {
-                        logger.log(completedRequestMessage);
-                    }
-                };
+            const onFinish = (): void => {
+                const [seconds, nanoseconds] = process.hrtime(startTime);
+                const durationMs = (seconds * 1e3 + nanoseconds / 1e6).toFixed(
+                    2
+                );
+                const statusCode: number = res.statusCode;
 
-                if ('once' in res && typeof res.once === 'function') {
-                    res.once('finish', onResponseFinish);
-                } else if (
-                    'raw' in res &&
-                    'once' in res.raw &&
-                    typeof res.raw.once === 'function'
-                ) {
-                    res.raw.once('finish', onResponseFinish);
+                const message = config.completedRequestMessage({
+                    method,
+                    url,
+                    statusCode,
+                    durationMs,
+                });
+
+                if (statusCode >= 300) {
+                    config.logger.error(message);
+                } else {
+                    config.logger.log(message);
                 }
+            };
+
+            if ('once' in res && typeof res.once === 'function') {
+                res.once('finish', onFinish);
+            } else if (
+                'raw' in res &&
+                'once' in res.raw &&
+                typeof res.raw.once === 'function'
+            ) {
+                res.raw.once('finish', onFinish);
             }
 
             next();
