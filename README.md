@@ -1,132 +1,129 @@
+# 📡 HttpLoggerMiddleware
 
-# HttpLoggerMiddleware
+[![npm version](https://img.shields.io/npm/v/@samofprog/nestjs-logstack.svg)](https://www.npmjs.com/package/@samofprog/nestjs-http-logger)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-HttpLoggerMiddleware is a configurable middleware for logging HTTP requests and responses in a NestJS application. It provides detailed information about incoming requests and completed responses, including the method, URL, status code, and processing duration. You can now also ignore specific paths from being logged.
+HttpLoggerMiddleware is a powerful and configurable middleware for logging HTTP requests and responses in your NestJS
+application.  
+It provides detailed logs about incoming requests and completed responses, including HTTP method, URL, headers, response
+status, and processing duration.  
+Additional features include masking sensitive headers, ignoring specific paths, and supporting custom loggers.
 
-## Features
+## ✨ Features
 
-- Logs detailed information about incoming HTTP requests (method, URL, headers).
-- Logs detailed information about completed responses, including:
-  - HTTP status code.
-  - Precise processing duration in milliseconds.
-- Supports custom log messages for incoming and completed requests.
-- Allows the use of a custom logger (`LoggerService`) or defaults to NestJS's global logger.
-- Differentiates between successful responses (logged as `log`) and error responses (logged as `error`) for better debugging.
-- Allows ignoring specific paths using `ignorePaths`.
-- Easy integration with both default and custom configurations.
-- **Framework Compatibility**: Seamless integration with both Express and Fastify frameworks.
+| Feature                                  | Description                                                    |
+|------------------------------------------|----------------------------------------------------------------|
+| 📥 Detailed request and response logging | Logs HTTP method, URL, headers, status codes, and duration     |
+| 🔒 Sensitive header masking              | Allows masking sensitive headers like Authorization or Cookie  |
+| 🚫 Path ignoring                         | Ignore logging on specific paths                               |
+| 📝 Custom log message formatting         | Customize incoming and completed request log messages          |
+| 🛠 Custom logger support                 | Use your own LoggerService or fallback to NestJS global logger |
+| ⚠️ Log level distinction                 | Successful responses logged with `log`, errors with `error`    |
+| ⚙️ Framework compatibility               | Works with both Express and Fastify                            |
 
-## Installation
+## 📦 Installation
 
 Install the package using npm or yarn:
 
 ```bash
-npm install @samofprog/nestjs-http-logger 
-# or  
+npm install @samofprog/nestjs-http-logger
+# or
 yarn add @samofprog/nestjs-http-logger
 ```
 
-## Usage
+---
 
-The `HttpLoggerMiddleware` can be used directly with the `app.use` method in a NestJS application:
+## 🚀 Usage
+
+Use the middleware in your NestJS bootstrap file:
 
 ```typescript
-import {HttpLoggerMiddleware} from '@samofprog/nestjs-http-logger';
-import {NestFactory} from '@nestjs/core';
-import {AppModule} from './app.module';
+import { HttpLoggerMiddleware } from '@samofprog/nestjs-http-logger';
+import { NestFactory } from '@nestjs/core';
+import { AppModule } from './app.module';
 
 async function bootstrap() {
-    const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule);
 
-    app.use(HttpLoggerMiddleware.create({
-        incomingRequestMessage: (details) => 
-            `Received: ${details.method} ${details.url}`,
-        completedRequestMessage: (details) =>
-            `Handled: ${details.method} ${details.url} - ${details.statusCode} (${details.durationMs} ms)`,
-        ignorePaths: ['/health', '/metrics']  // Paths to ignore in logs
-    }));
+  app.use(HttpLoggerMiddleware.create());
 
-    // or
-
-    app.use(HttpLoggerMiddleware.create());
-
-    await app.listen(3000);
+  await app.listen(3000);
 }
-
 bootstrap();
 ```
 
-### Middleware Options
+## ⚙️ Usage with Custom Configuration
 
-The middleware accepts an optional `HttpLoggerOptions` object to customize the log messages. If not provided, default messages will be used.
-
-#### `HttpLoggerOptions` Interface
-
-```typescript
-export interface HttpLoggerOptions {
-  logger?: LoggerService; // NestJS LoggerService
-  ignorePaths?: string[]; // List of paths to ignore for logging
-  incomingRequestMessage?: (details: {
-    method: string;
-    url: string;
-    headers: Record<string, string | string[] | undefined>;
-  }) => string;
-  completedRequestMessage?: (details: {
-    method: string;
-    url: string;
-    statusCode: number;
-    durationMs: string;
-  }) => string;
-}
-```
-
-- `incomingRequestMessage`: A function that generates the log message for incoming requests. Receives `method` and `url` as parameters.
-- `completedRequestMessage`: A function that generates the log message for completed requests. Receives `method`, `url`, `statusCode`, and `durationMs` as parameters.
-- `logger`: An optional custom logger implementing the `LoggerService` interface from NestJS. If not provided, a default `Logger` will be used.
-
-
-### Example
-
-#### Default Usage
-
-```typescript
-app.use(HttpLoggerMiddleware.create());
-```
-
-This will log messages with the following formats:
-
-- Incoming request: `Incoming Request: GET /example - Headers: {"user-agent":"Mozilla/5.0","accept":"*/*"}`
-- Completed request: `Completed Request: GET /example - Status: 200 - Duration: 123.45 ms`
-
-#### Custom Messages
+You can customize the middleware behavior with options:
 
 ```typescript
 app.use(HttpLoggerMiddleware.create({
-    incomingRequestMessage: (details) => 
-        `Received: ${details.method} ${details.url}`,
-    completedRequestMessage: (details) =>
-        `Handled: ${details.method} ${details.url} - ${details.statusCode} (${details.durationMs} ms)`
+  ignorePaths: ['/health', '/metrics'],
+  sensitiveHeaders: ['authorization', 'cookie'],
+  sanitizeHeaders: (headers) => {
+    const sanitized = { ...headers };
+    ['authorization', 'cookie'].forEach(key => {
+      if (sanitized[key]) sanitized[key] = '[REDACTED]';
+    });
+    return sanitized;
+  },
+  incomingRequestMessage: (details) =>
+    `Incoming: ${details.method} ${details.url} → headers: ${JSON.stringify(details.headers)}`,
+  completedRequestMessage: (details) =>
+    `Completed: ${details.method} ${details.url} ← status ${details.statusCode} in ${details.durationMs} ms`,
 }));
 ```
 
-This will log messages with custom formats, e.g.,
+---
 
-- Incoming request: `>>> GET /example >>>`
-- Completed request: `<<< GET /example <<< Status: 200, Time: 123.45ms`
+## 🛠 Options
 
-#### Custom Logger
+| Option                    | Type                                                    | Description                                                                                                    | Default                       |
+|---------------------------|---------------------------------------------------------|----------------------------------------------------------------------------------------------------------------|-------------------------------|
+| `logger`                  | `LoggerService`                                         | Custom logger implementing NestJS `LoggerService` interface.                                                   | NestJS default logger         |
+| `ignorePaths`             | `string[]`                                              | List of URL paths to ignore from logging.                                                                      | `[]`                          |
+| `sensitiveHeaders`        | `string[]`                                              | List of header names to mask in logs (case-insensitive).                                                       | `[]`                          |
+| `sanitizeHeaders`         | `(headers: Record<string, any>) => Record<string, any>` | Function to transform headers before logging (e.g., to mask values).                                           | Identity function (no change) |
+| `incomingRequestMessage`  | `(details) => string`                                   | Function returning the log message for incoming requests. Receives `{ method, url, headers }`.                 | Default formatted string      |
+| `completedRequestMessage` | `(details) => string`                                   | Function returning the log message for completed requests. Receives `{ method, url, statusCode, durationMs }`. | Default formatted string      |
 
-If you want to use your own logger instead of the default NestJS logger, you can pass it via the `logger` option:
+---
+
+## 🧩 Examples
+
+### 🚫 Ignore paths and 🔒 mask sensitive headers
+
+```typescript
+app.use(HttpLoggerMiddleware.create({
+  ignorePaths: ['/health', '/metrics'],
+  sensitiveHeaders: ['authorization', 'cookie'],
+}));
+```
+
+### 🧼 Custom sanitization of headers
+
+```typescript
+app.use(HttpLoggerMiddleware.create({
+  sanitizeHeaders: (headers) => {
+    const sanitized = { ...headers };
+    if (sanitized['authorization']) sanitized['authorization'] = '[TOKEN REDACTED]';
+    if (sanitized['cookie']) sanitized['cookie'] = '[COOKIE REDACTED]';
+    return sanitized;
+  }
+}));
+```
+
+### 🧼 Custom sanitization of headers
 
 ```typescript
 import { Logger } from '@nestjs/common';
 
-const customLogger = new Logger('CustomLogger');
+const customLogger = new Logger('MyCustomLogger');
 
 app.use(HttpLoggerMiddleware.create({ logger: customLogger }));
+
 ```
 
-
-## License
+## 📄 License
 
 This package is open-source and available under the [MIT License](https://mit-license.org/).
