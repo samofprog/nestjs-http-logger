@@ -20,6 +20,7 @@ Additional features include masking sensitive headers, ignoring specific paths, 
 | 🛠 Custom logger support                 | Use your own LoggerService or fallback to NestJS global logger |
 | ⚠️ Log level distinction                 | Successful responses logged with `log`, errors with `error`    |
 | ⚙️ Framework compatibility               | Works with both Express and Fastify                            |
+| 🎛️ Configurable logging levels          | Control what data to log: headers, request body, response data |
 
 ## 📦 Installation
 
@@ -84,8 +85,11 @@ app.use(HttpLoggerMiddleware.create({
 | `ignorePaths`             | `string[]`                                              | List of URL paths to ignore from logging.                                                                      | `[]`                          |
 | `sensitiveHeaders`        | `string[]`                                              | List of header names to mask in logs (case-insensitive).                                                       | `[]`                          |
 | `sanitizeHeaders`         | `(headers: Record<string, any>) => Record<string, any>` | Function to transform headers before logging (e.g., to mask values).                                           | Identity function (no change) |
-| `incomingRequestMessage`  | `(details) => string`                                   | Function returning the log message for incoming requests. Receives `{ method, url, headers }`.                 | Default formatted string      |
-| `completedRequestMessage` | `(details) => string`                                   | Function returning the log message for completed requests. Receives `{ method, url, statusCode, durationMs }`. | Default formatted string      |
+| `incomingRequestMessage`  | `(details) => string`                                   | Function returning the log message for incoming requests. Receives `{ method, url, headers, body }`.           | Default formatted string      |
+| `completedRequestMessage` | `(details) => string`                                   | Function returning the log message for completed requests. Receives `{ method, url, statusCode, durationMs, responseData }`. | Default formatted string      |
+| `logHeaders`              | `boolean`                                               | Whether to include headers in the log messages.                                                                | `true`                        |
+| `logRequestBody`          | `boolean`                                               | Whether to include request body in the log messages.                                                           | `false`                       |
+| `logResponseData`         | `boolean`                                               | Whether to include response data in the log messages.                                                          | `false`                       |
 
 ---
 
@@ -113,7 +117,17 @@ app.use(HttpLoggerMiddleware.create({
 }));
 ```
 
-### 🧼 Custom sanitization of headers
+### 🎛️ Configure logging levels
+
+```typescript
+app.use(HttpLoggerMiddleware.create({
+  logHeaders: true,        // Include headers in logs (default: true)
+  logRequestBody: true,    // Include request body in logs (default: false)
+  logResponseData: true,   // Include response data in logs (default: false)
+}));
+```
+
+### 🛠 Custom logger
 
 ```typescript
 import { Logger } from '@nestjs/common';
@@ -121,7 +135,6 @@ import { Logger } from '@nestjs/common';
 const customLogger = new Logger('MyCustomLogger');
 
 app.use(HttpLoggerMiddleware.create({ logger: customLogger }));
-
 ```
 
 ## 📄 License

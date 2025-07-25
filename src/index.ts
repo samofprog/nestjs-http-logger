@@ -1,3 +1,14 @@
-import { HttpLoggerMiddleware } from './http-logger.middleware';
-export * from './interfaces';
-export { HttpLoggerMiddleware };
+// Middleware
+export {
+    HttpLoggerMiddleware,
+    HTTP_LOGGER_OPTIONS,
+} from './middleware/http-logger.middleware';
+
+// Providers
+export {
+    createHttpLoggerProviders,
+    createHttpLoggerAsyncProviders,
+} from './providers/http-logger.provider';
+
+// Types and interfaces
+export * from './types';
