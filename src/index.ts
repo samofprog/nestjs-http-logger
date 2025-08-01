@@ -10,5 +10,6 @@ export {
     createHttpLoggerAsyncProviders,
 } from './providers/http-logger.provider';
 
-// Types and interfaces
+// Types ,  interfaces and helpers
 export * from './types';
+export * from './helper';

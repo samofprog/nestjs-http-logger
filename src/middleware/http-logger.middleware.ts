@@ -39,7 +39,8 @@ export class HttpLoggerMiddleware implements NestMiddleware {
         @Inject(HTTP_LOGGER_OPTIONS)
         private readonly options: Partial<HttpLoggerOptions> = {}
     ) {
-        this.logger = this.options.logger ?? new Logger('HttpLoggerMiddleware');
+        this.logger =
+            this.options.logger ?? new Logger(HttpLoggerMiddleware.name);
         this.sanitizeHeaders = this.createHeaderSanitizer(
             this.options.sensitiveHeaders ?? DEFAULT_SENSITIVE_HEADERS
         );
@@ -104,7 +105,7 @@ export class HttpLoggerMiddleware implements NestMiddleware {
         incoming: (details: RequestDetails) => string;
         completed: (details: CompletedRequestDetails) => string;
     } {
-        const logHeaders = options.logHeaders ?? true;
+        const logHeaders = options.logHeaders ?? false;
         const logRequestBody = options.logRequestBody ?? false;
 
         const defaultFormatter = this.createMessageFormatter(
@@ -121,7 +122,7 @@ export class HttpLoggerMiddleware implements NestMiddleware {
     }
 
     private createMessageFormatter(
-        logHeaders: boolean = true,
+        logHeaders: boolean = false,
         logRequestBody: boolean = false
     ): {
         incoming: (details: RequestDetails) => string;
